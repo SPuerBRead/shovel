@@ -11,7 +11,7 @@ CTestTestfile.cmake
 _deps
 cmake-build-debug
 .DS_Store
-.idea/*
+**/.idea/
 
 # User-specific stuff:
 .idea/workspace.xml
