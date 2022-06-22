@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="docker_vfs (74cf4865-0216-44d9-815f-51f01f39a128)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.zTHJwxft0V" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="docker_zfs (775264fa-04d8-4c51-ac00-f0baeb69731e)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.DllpXUBYws" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+      <paths name="overlayfs (3bc5dd54-7274-40c9-b3a8-b2ed3ca3d64e)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/tmp/tmp.5xTt35EHU1" local="$PROJECT_DIR$" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/cmake-build-debug" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
