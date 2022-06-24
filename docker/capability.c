@@ -6,8 +6,8 @@
 #include "../util/output.h"
 #include <linux/capability.h>
 #include <unistd.h>
-#include <asm-generic/unistd.h>
 #include <string.h>
+#include <sys/syscall.h>
 
 char const *cap_name[__CAP_BITS] = {
         /* 0 */    "cap_chown",
@@ -58,7 +58,8 @@ int check_cap_sys_admin() {
     printf_wrapper(INFO, "Current Process(%d) Capability:\n", getpid());
     struct __user_cap_header_struct header = {_LINUX_CAPABILITY_VERSION_3, getpid()};
     struct __user_cap_data_struct caps[_LINUX_CAPABILITY_U32S_3] = {};
-    get_current_process_capability(&header, (struct __user_cap_data_struct *) &caps);
+//    get_current_process_capability(&header, (struct __user_cap_data_struct *) &caps);
+    syscall(__NR_capget, &header, &caps);
     printf_wrapper(INFO, "CapEff: 0x%016llx\n", caps->effective);
     printf_wrapper(INFO, "CapInh: 0x%016llx\n", caps->inheritable);
     printf_wrapper(INFO, "CapPrm: 0x%016llx\n", caps->permitted);

@@ -22,7 +22,7 @@ int main() {
             printf_wrapper(INFO, "Try to get container path in host\n");
             char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
             get_container_path_in_host(container_path_in_host);
-            printf_wrapper(INFO, "Container path in host is: \n", container_path_in_host);
+            escape_by_release_agent(container_path_in_host);
         }
     } else {
         printf_wrapper(INFO, "Try to get container path in host\n");
