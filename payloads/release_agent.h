@@ -8,4 +8,4 @@
 #endif //SHOVEL_RELEASE_AGENT_H
 
 
-int escape_by_release_agent(char *, char *);
+int escape_by_release_agent(char *);

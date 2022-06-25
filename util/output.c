@@ -18,15 +18,15 @@ void printf_info(char *format, va_list args_list) {
 }
 
 void printf_warning(char *format, va_list args_list) {
-    char *info_msg_format = (char *) malloc((strlen("[info] ") + strlen(format)) * sizeof(char));
-    strcpy(info_msg_format, "[INFO] ");
+    char *info_msg_format = (char *) malloc((strlen("[warning] ") + strlen(format)) * sizeof(char));
+    strcpy(info_msg_format, "[WARNING] ");
     strcat(info_msg_format, format);
     vprintf(info_msg_format, args_list);
 }
 
 void printf_error(char *format, va_list args_list) {
-    char *info_msg_format = (char *) malloc((strlen("[info] ") + strlen(format)) * sizeof(char));
-    strcpy(info_msg_format, "[INFO] ");
+    char *info_msg_format = (char *) malloc((strlen("[error] ") + strlen(format)) * sizeof(char));
+    strcpy(info_msg_format, "[ERROR] ");
     strcat(info_msg_format, format);
     vprintf(info_msg_format, args_list);
 }

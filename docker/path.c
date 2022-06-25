@@ -13,7 +13,7 @@
 #include "../util/regex_util.h"
 #include "../util/output.h"
 
-enum storage_drivers {
+enum STORAGE_DRIVERS{
     DEVICE_MAPPER = 1,
     AUFS = 2,
     BTRFS = 3,
