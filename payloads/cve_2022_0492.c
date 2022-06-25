@@ -6,28 +6,14 @@
 
 #include "cve_2022_0492.h"
 
-#include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include "stdio.h"
 #include "../util/output.h"
 #include "../docker/capability.h"
 
 #include <sched.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <fcntl.h>
 #include <string.h>
-#include <stdlib.h>
-#include <mntent.h>
-#include <linux/capability.h>
-#include <sys/syscall.h>
-#include <regex.h>
-#include <sys/stat.h>
-#include <sys/mount.h>
-#include <signal.h>
-#include <time.h>
 
 int check_max_user_namespace() {
     char *max_user_namespace_path = "/proc/sys/user/max_user_namespaces";

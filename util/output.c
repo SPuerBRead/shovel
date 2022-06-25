@@ -29,7 +29,6 @@ void printf_error(char *format, va_list args_list) {
     strcpy(info_msg_format, "[INFO] ");
     strcat(info_msg_format, format);
     vprintf(info_msg_format, args_list);
-    exit(0);
 }
 
 void printf_wrapper(int type, char *format, ...) {
