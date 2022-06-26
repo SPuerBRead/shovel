@@ -20,12 +20,12 @@ int remove_dir(const char *dir) {
     struct stat dir_stat;
 
     if (0 != access(dir, F_OK)) {
-        printf_wrapper(ERROR, "No permission to access dir %s", dir);
+        printf_wrapper(ERROR, "No permission to access dir %s\n", dir);
         return -1;
     }
 
     if (0 > stat(dir, &dir_stat)) {
-        printf_wrapper(ERROR, "Get directory %s stat error, remove %s failed", dir, dir);
+        printf_wrapper(ERROR, "Get directory %s stat error, remove %s failed\n", dir, dir);
         return -1;
     }
 
@@ -44,7 +44,7 @@ int remove_dir(const char *dir) {
         closedir(dirp);
         rmdir(dir);
     } else {
-        printf_wrapper(ERROR, "Unknown dir %s type, remove %s failed", dir, dir);
+        printf_wrapper(ERROR, "Unknown dir %s type, remove %s failed\n", dir, dir);
         return -1;
     }
     return 0;
@@ -54,12 +54,12 @@ int remove_file(const char *file_path) {
     struct stat file_stat;
 
     if (0 != access(file_path, F_OK)) {
-        printf_wrapper(ERROR, "No permission to access file %s", file_path);
+        printf_wrapper(ERROR, "No permission to access file %s\n", file_path);
         return -1;
     }
 
     if (0 > stat(file_path, &file_stat)) {
-        printf_wrapper(ERROR, "Get file %s stat error, remove %s failed", file_path, file_path);
+        printf_wrapper(ERROR, "Get file %s stat error, remove %s failed\n", file_path, file_path);
         return -1;
     }
 
@@ -69,4 +69,8 @@ int remove_file(const char *file_path) {
         return -1;
     }
     return 0;
+}
+
+char *stdin_input() {
+
 }

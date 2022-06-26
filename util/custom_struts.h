@@ -25,3 +25,12 @@ struct ATTACK_INFO {
     char *ip;
     int port;
 } attack_info;
+
+
+struct RELEASE_AGENT_ATTACK_INFO {
+    char *exp_path;
+    char *container_path_in_host;
+    char *controller_path;
+    char *mount_path;
+    char *output_path_in_container;
+} release_agent_attack_info;

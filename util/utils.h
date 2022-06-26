@@ -7,7 +7,6 @@
 
 #endif //SHOVEL_UTILS_H
 
-
 int remove_dir(const char *);
 
 int remove_file(const char *);

