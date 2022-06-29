@@ -13,6 +13,7 @@
 
 void usage(char *args0) {
     printf("usage: %s [args ...]\n"
+           "Options:\n"
            "args of program\n"
            "  -h, --help                                show help message\n"
            "  -v, --version                             show program version\n"
@@ -22,9 +23,9 @@ void usage(char *args0) {
            "  -d, --devices-allow                       escape by devices-allow\n"
            "  -u, --cve-2022-0492                       get cap_sys_admin by cve-2022-0492\n"
            "args of other\n"
-           "  -p, --path=xxx                            manually specify path of container in host,use this parameter if program can't get it automatically\n"
+           "  -p, --container_path=xxx                  manually specify path of container in host,use this parameter if program can't get it automatically\n"
            "  -m, --mode={exec | shell | reverse}       the mode that needs to be returned after a successful escape\n"
-           "  -c, --command=xxx                            set command in exec mode\n"
+           "  -c, --command=xxx                         set command in exec mode\n"
            "  -I, --ip                                  set ip address in reverse mode\n"
            "  -P, --port                                set port in reverse mode\n"
            "  -b, --bash                                enter the new namespace bash after the attack is complete,only takes effect when the '-u' is specified\n"

@@ -23,7 +23,7 @@ struct ATTACK_INFO {
     int attack_mode;
     char *command;
     char *ip;
-    int port;
+    char *port;
 } attack_info;
 
 

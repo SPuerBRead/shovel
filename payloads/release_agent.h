@@ -11,3 +11,5 @@
 int escape_by_release_agent();
 
 void release_agent_exec();
+
+void release_agent_reverse();
