@@ -1,14 +1,14 @@
 #define _GNU_SOURCE
 
 #include "docker/capability.h"
-#include "payloads/cve_2022_0492.h"
+#include "exploits/cve_2022_0492.h"
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include "util/output.h"
 #include "util/program_info.h"
 #include "docker/path.h"
-#include "payloads/release_agent.h"
+#include "exploits/release_agent.h"
 #include "util/regex_util.h"
 #include "util/custom_struts.h"
 #include "util/utils.h"
