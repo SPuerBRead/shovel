@@ -8,10 +8,14 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
 #include "output.h"
+#include <fcntl.h>
+
+#define DEFAULT_READ_SIZE 4096
 
 
-int remove_dir(const char *dir) {
+int remove_dir(char *dir) {
     char cur_dir[] = ".";
     char up_dir[] = "..";
     char dir_name[128];
@@ -50,7 +54,7 @@ int remove_dir(const char *dir) {
     return 0;
 }
 
-int remove_file(const char *file_path) {
+int remove_file(char *file_path) {
     struct stat file_stat;
 
     if (0 != access(file_path, F_OK)) {
@@ -71,6 +75,54 @@ int remove_file(const char *file_path) {
     return 0;
 }
 
-char *stdin_input() {
+int output_bash_warning(char *escape_type, char *mode) {
+    printf_wrapper(WARNING,
+                   "Escape by %s in %s mode will call bash, may be caught by intrusion detection devices, are you sure use this mode? (y/n) ",
+                   escape_type, mode);
+    char *inputBuffer = malloc(sizeof(char) * 2);
+    memset(inputBuffer, 0x00, 2);
+    fgets(inputBuffer, 2, stdin);
+    inputBuffer[strcspn(inputBuffer, "\n")] = 0x00;
+    if ((strcmp(inputBuffer, "y") == 0) || (strcmp(inputBuffer, "Y") == 0)) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
 
+int read_file(char *path, char *buffer, int flags) {
+    int fd;
+    fd = open(path, flags);
+    if (fd == -1) {
+        close(fd);
+        return -1;
+    }
+    struct stat s;
+    int size = DEFAULT_READ_SIZE;
+    size_t stat_ret = stat(path, &s);
+    if (stat_ret != -1 && s.st_size != 0) {
+        size = (int)s.st_size;
+    }
+    size_t ret = read(fd, buffer, size);
+    if (ret == -1) {
+        close(fd);
+        return -1;
+    }
+    close(fd);
+    return 0;
+}
+
+
+int write_file(char *path, char *buffer, int flags) {
+    int fd;
+    fd = open(path, flags);
+    if (!fd) {
+        return -1;
+    }
+    size_t ret = write(fd, buffer, strlen(buffer));
+    if (ret == -1) {
+        return -1;
+    }
+    close(fd);
+    return 0;
 }

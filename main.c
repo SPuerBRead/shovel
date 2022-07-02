@@ -32,17 +32,21 @@ int main(int argc, char *argv[]) {
             {"command",        required_argument, NULL, 'c'},
             {"ip",             required_argument, NULL, 'I'},
             {"port",           required_argument, NULL, 'P'},
-            {"bash",           no_argument,       NULL, 'b'}
+            {"bash",           no_argument,       NULL, 'b'},
+            {"backdoor_path",  required_argument, NULL, 'B'}
     };
     int opt;
     attack_info.attack_mode = -1;
-    attack_info.command = (char *) malloc(512 * sizeof(char));
-    memset(attack_info.command, 0x00, 512);
     attack_info.attack_type = -1;
+    attack_info.command = (char *) malloc(512 * sizeof(char));
     attack_info.ip = (char *) malloc(64 * sizeof(char));
+    attack_info.backdoor_path = (char *) malloc(512 * sizeof(char));
+    attack_info.port = (char *) malloc(10 * sizeof(char));
+    memset(attack_info.command, 0x00, 512);
     memset(attack_info.ip, 0x00, 64);
-    attack_info.port = -1;
-    const char *opt_type = "hvardp:m:c:I:P:b";
+    memset(attack_info.ip, 0x00, 512);
+    memset(attack_info.port, 0x00, 10);
+    const char *opt_type = "hvardp:m:c:I:P:bB:";
     while ((opt = getopt_long_only(argc, argv, opt_type, opts, NULL)) != -1) {
         switch (opt) {
             case 'h':
@@ -60,10 +64,24 @@ int main(int argc, char *argv[]) {
             case 'm':
                 if (strcmp(optarg, "exec") == 0) {
                     attack_info.attack_mode = EXEC;
+                    if (output_bash_warning("release_agent", "exec") != 0) {
+                        printf_wrapper(INFO, "Exit\n");
+                        exit(EXIT_SUCCESS);
+                    }
                 } else if (strcmp(optarg, "shell") == 0) {
                     attack_info.attack_mode = SHELL;
+                    if (output_bash_warning("release_agent", "shell") != 0) {
+                        printf_wrapper(INFO, "Exit\n");
+                        exit(EXIT_SUCCESS);
+                    }
                 } else if (strcmp(optarg, "reverse") == 0) {
                     attack_info.attack_mode = REVERSE;
+                    if (output_bash_warning("release_agent", "reverse") != 0) {
+                        printf_wrapper(INFO, "Exit\n");
+                        exit(EXIT_SUCCESS);
+                    }
+                } else if (strcmp(optarg, "backdoor") == 0) {
+                    attack_info.attack_mode = BACKDOOR;
                 } else {
                     printf_wrapper(ERROR, "Unknown attack mode -m support {exec | shell | reverse}\n");
                     exit(EXIT_SUCCESS);
@@ -71,8 +89,13 @@ int main(int argc, char *argv[]) {
                 break;
             case 'I':
                 attack_info.ip = optarg;
+                break;
             case 'P':
                 attack_info.port = optarg;
+                break;
+            case 'B':
+                attack_info.backdoor_path = optarg;
+                break;
 //            default:
 //                usage(argv[0]);
 //                break;
@@ -87,8 +110,13 @@ int main(int argc, char *argv[]) {
         printf_wrapper(ERROR, "In exec mode, -c must be set and can't be empty\n");
         exit(EXIT_SUCCESS);
     }
-    if (attack_info.attack_mode == REVERSE && (attack_info.ip[0] == 0x00 || attack_info.port == -1)) {
+    if (attack_info.attack_mode == REVERSE && (attack_info.ip[0] == 0x00 || strcmp(attack_info.port, "") == 0)) {
         printf_wrapper(ERROR, "In reverse mode, -I and -P must set\n");
+        exit(EXIT_SUCCESS);
+    }
+
+    if (attack_info.attack_mode == BACKDOOR && attack_info.backdoor_path == 0x00) {
+        printf_wrapper(ERROR, "In backdoor mode, -B  must set\n");
         exit(EXIT_SUCCESS);
     }
     switch (attack_info.attack_type) {
@@ -119,10 +147,10 @@ int main(int argc, char *argv[]) {
 
                 char *inputBuffer = malloc(sizeof(char) * DEFAULT_INPUT_BUFFER_SIZE);
                 memset(inputBuffer, 0x00, DEFAULT_INPUT_BUFFER_SIZE);
+                fgets(inputBuffer, DEFAULT_INPUT_BUFFER_SIZE, stdin);
                 while (strcmp(inputBuffer, "quit") != 0) {
                     printf("# ");
                     fgets(inputBuffer, DEFAULT_INPUT_BUFFER_SIZE, stdin);
-
                     if (inputBuffer[strlen(inputBuffer) - 1] != '\n') {
                         printf_wrapper(ERROR, "The input was too long, input buffer size %s",
                                        DEFAULT_INPUT_BUFFER_SIZE);
@@ -135,6 +163,10 @@ int main(int argc, char *argv[]) {
 
             if (attack_info.attack_mode == REVERSE) {
                 release_agent_reverse();
+            }
+
+            if (attack_info.attack_mode == BACKDOOR) {
+                release_agent_backdoor();
             }
             break;
         }

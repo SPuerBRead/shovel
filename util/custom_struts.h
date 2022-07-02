@@ -15,7 +15,8 @@ enum ATTACK_TYPE {
 enum ATTACK_MODE {
     EXEC,
     SHELL,
-    REVERSE
+    REVERSE,
+    BACKDOOR
 };
 
 struct ATTACK_INFO {
@@ -24,6 +25,7 @@ struct ATTACK_INFO {
     char *command;
     char *ip;
     char *port;
+    char *backdoor_path;
 } attack_info;
 
 

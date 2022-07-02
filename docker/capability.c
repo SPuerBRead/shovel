@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/syscall.h>
+#include <malloc.h>
 
 char const *cap_name[__CAP_BITS] = {
         /* 0 */    "cap_chown",
@@ -64,7 +65,7 @@ int check_cap_sys_admin() {
     printf_wrapper(INFO, "CapPrm: 0x%016llx\n", caps->permitted);
     cap_value_t cap;
     const char *sep = "";
-    char effective_capability_str[512] = "";
+    char *effective_capability_str = malloc(512 * sizeof(char));
     for (cap = 0; (cap < 64) && (caps->effective >> cap); ++cap) {
         if (caps->effective & (1ULL << cap)) {
             char *ptr;
