@@ -101,7 +101,7 @@ int read_file(char *path, char *buffer, int flags) {
     int size = DEFAULT_READ_SIZE;
     size_t stat_ret = stat(path, &s);
     if (stat_ret != -1 && s.st_size != 0) {
-        size = (int)s.st_size;
+        size = (int) s.st_size;
     }
     size_t ret = read(fd, buffer, size);
     if (ret == -1) {
@@ -125,4 +125,12 @@ int write_file(char *path, char *buffer, int flags) {
     }
     close(fd);
     return 0;
+}
+
+int file_exist(char *path) {
+    if (access(path, F_OK) == 0) {
+        return 0;
+    } else {
+        return -1;
+    }
 }

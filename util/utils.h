@@ -16,3 +16,5 @@ int output_bash_warning(char *, char *);
 int write_file(char *, char *, int);
 
 int read_file(char *, char*, int);
+
+int file_exist(char *);

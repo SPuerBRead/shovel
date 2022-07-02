@@ -15,20 +15,23 @@ void printf_info(char *format, va_list args_list) {
     strcpy(info_msg_format, "[INFO] ");
     strcat(info_msg_format, format);
     vprintf(info_msg_format, args_list);
+    free(info_msg_format);
 }
 
 void printf_warning(char *format, va_list args_list) {
-    char *info_msg_format = (char *) malloc((strlen("[warning] ") + strlen(format)) * sizeof(char));
-    strcpy(info_msg_format, "[WARNING] ");
-    strcat(info_msg_format, format);
-    vprintf(info_msg_format, args_list);
+    char *warning_msg_format = (char *) malloc((strlen("[warning] ") + strlen(format)) * sizeof(char));
+    strcpy(warning_msg_format, "[WARNING] ");
+    strcat(warning_msg_format, format);
+    vprintf(warning_msg_format, args_list);
+    free(warning_msg_format);
 }
 
 void printf_error(char *format, va_list args_list) {
-    char *info_msg_format = (char *) malloc((strlen("[error] ") + strlen(format)) * sizeof(char));
-    strcpy(info_msg_format, "[ERROR] ");
-    strcat(info_msg_format, format);
-    vprintf(info_msg_format, args_list);
+    char *error_msg_format = (char *) malloc((strlen("[error] ") + strlen(format)) * sizeof(char));
+    strcpy(error_msg_format, "[ERROR] ");
+    strcat(error_msg_format, format);
+    vprintf(error_msg_format, args_list);
+    free(error_msg_format);
 }
 
 void printf_wrapper(int type, char *format, ...) {

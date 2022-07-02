@@ -81,9 +81,11 @@ int check_cap_sys_admin() {
     }
     printf_wrapper(INFO, "Effective capability: %s\n", effective_capability_str);
     if (strstr(effective_capability_str, cap_name[21])) {
+        free(effective_capability_str);
         printf_wrapper(INFO, "Current process has CAP_SYS_ADMIN\n");
         return 1;
     } else {
+        free(effective_capability_str);
         printf_wrapper(INFO, "Current process don't have CAP_SYS_ADMIN\n");
         return 0;
     }
