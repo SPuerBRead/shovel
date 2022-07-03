@@ -15,6 +15,8 @@
 #include <getopt.h>
 #include <stdio.h>
 
+#include "docker/cgroup.h"
+
 #define DEFAULT_INPUT_BUFFER_SIZE 1024
 
 
@@ -119,6 +121,16 @@ int main(int argc, char *argv[]) {
         printf_wrapper(ERROR, "In backdoor mode, -B  must set\n");
         exit(EXIT_SUCCESS);
     }
+
+    printf_wrapper(INFO, "Check if the program is running in docker\n");
+    char *cgroup_id = malloc(512 * sizeof(char));
+    memset(cgroup_id, 0x00, 512);
+    get_cgroup_id(cgroup_id);
+    if (!*cgroup_id) {
+        printf_wrapper(ERROR, "The current running environment does not appear to be a docker or k8s\n");
+        exit(EXIT_SUCCESS);
+    }
+
     switch (attack_info.attack_type) {
         case RELEASE_AGENT: {
             int sys_admin = check_cap_sys_admin();
