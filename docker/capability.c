@@ -66,6 +66,7 @@ int check_cap_sys_admin() {
     cap_value_t cap;
     const char *sep = "";
     char *effective_capability_str = malloc(512 * sizeof(char));
+    memset(effective_capability_str, 0x00 ,512);
     for (cap = 0; (cap < 64) && (caps->effective >> cap); ++cap) {
         if (caps->effective & (1ULL << cap)) {
             char *ptr;

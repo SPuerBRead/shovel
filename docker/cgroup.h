@@ -8,4 +8,4 @@
 #endif //SHOVEL_CGROUP_H
 
 
-int get_cgroup_id();
+int get_cgroup_id(char *);

@@ -11,8 +11,10 @@
 #include <malloc.h>
 #include "output.h"
 #include <fcntl.h>
+#include <assert.h>
+#include <stdlib.h>
 
-#define DEFAULT_READ_SIZE 4096
+#define DEFAULT_READ_SIZE 1048576
 
 
 int remove_dir(char *dir) {
@@ -67,7 +69,7 @@ int remove_file(char *file_path) {
         return -1;
     }
 
-    if (S_ISREG(file_stat.st_mode)) {
+    if (S_ISREG(file_stat.st_mode) || S_ISBLK(file_stat.st_mode)) {
         remove(file_path);
     } else {
         return -1;
@@ -75,7 +77,13 @@ int remove_file(char *file_path) {
     return 0;
 }
 
-int output_bash_warning(char *escape_type, char *mode) {
+void clear_input() {
+    char *buffer = malloc(sizeof(char) * 2);
+    memset(buffer, 0x00, 2);
+    fgets(buffer, 2, stdin);
+}
+
+void output_bash_warning(char *escape_type, char *mode) {
     printf_wrapper(WARNING,
                    "Escape by %s in %s mode will call bash, may be caught by intrusion detection devices, are you sure use this mode? (y/n) ",
                    escape_type, mode);
@@ -83,10 +91,12 @@ int output_bash_warning(char *escape_type, char *mode) {
     memset(inputBuffer, 0x00, 2);
     fgets(inputBuffer, 2, stdin);
     inputBuffer[strcspn(inputBuffer, "\n")] = 0x00;
+    clear_input();
     if ((strcmp(inputBuffer, "y") == 0) || (strcmp(inputBuffer, "Y") == 0)) {
-        return 0;
+        return;
     } else {
-        return -1;
+        printf_wrapper(INFO, "Exit\n");
+        exit(EXIT_SUCCESS);
     }
 }
 
@@ -134,3 +144,70 @@ int file_exist(char *path) {
         return -1;
     }
 }
+
+char **str_split(char *str, const char a_delim) {
+    char **result = 0;
+    size_t count = 0;
+    char *tmp = str;
+    char *last_comma = 0;
+    char delim[2];
+    delim[0] = a_delim;
+    delim[1] = 0;
+    while (*tmp) {
+        if (a_delim == *tmp) {
+            count++;
+            last_comma = tmp;
+        }
+        tmp++;
+    }
+    count += last_comma < (str + strlen(str) - 1);
+    count++;
+    result = malloc(sizeof(char *) * count);
+    if (result) {
+        size_t idx = 0;
+        char *token = strtok(str, delim);
+        while (token) {
+            assert(idx < count);
+            *(result + idx++) = strdup(token);
+            token = strtok(0, delim);
+        }
+        assert(idx == count - 1);
+        *(result + idx) = 0;
+    }
+    return result;
+}
+
+char *str_replace(char *orig, char *rep, char *with) {
+    char *result;
+    char *ins;
+    char *tmp;
+    unsigned long len_rep;
+    unsigned long len_with;
+    unsigned long len_front;
+    unsigned long count;
+    if (!orig || !rep)
+        return NULL;
+    len_rep = strlen(rep);
+    if (len_rep == 0)
+        return NULL;
+    if (!with)
+        with = "";
+    len_with = strlen(with);
+    ins = orig;
+    for (count = 0; (tmp = strstr(ins, rep)); ++count) {
+        ins = tmp + len_rep;
+    }
+    tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+    if (!result)
+        return NULL;
+    while (count--) {
+        ins = strstr(orig, rep);
+        len_front = ins - orig;
+        tmp = strncpy(tmp, orig, len_front) + len_front;
+        tmp = strcpy(tmp, with) + len_with;
+        orig += len_front + len_rep;
+    }
+    strcpy(tmp, orig);
+    return result;
+}
+

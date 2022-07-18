@@ -10,6 +10,7 @@
 
 enum ATTACK_TYPE {
     RELEASE_AGENT,
+    DEVICE_ALLOW,
 };
 
 enum ATTACK_MODE {
@@ -36,3 +37,19 @@ struct RELEASE_AGENT_ATTACK_INFO {
     char *mount_path;
     char *output_path_in_container;
 } release_agent_attack_info;
+
+struct DEVICE_ALLOW_ATTACK_INFO {
+    char *cgroup_id;
+    char *host_filesystem_mount_path;
+    char *crontab_path;
+    char *exp;
+    char *host_dev_path;
+    char *device_allow_path;
+    char *mount_path;
+} device_allow_attack_info;
+
+struct HOST_DEV_ATTRIBUTE {
+    int major;
+    int minor;
+    char *fstype;
+} host_dev_attribute;

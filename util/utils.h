@@ -11,10 +11,14 @@ int remove_dir(char *);
 
 int remove_file(char *);
 
-int output_bash_warning(char *, char *);
+void output_bash_warning(char *, char *);
 
 int write_file(char *, char *, int);
 
 int read_file(char *, char*, int);
 
 int file_exist(char *);
+
+char **str_split(char *, char);
+
+char *str_replace(char *orig, char *rep, char *with);
