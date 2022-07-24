@@ -11,6 +11,7 @@
 enum ATTACK_TYPE {
     RELEASE_AGENT,
     DEVICE_ALLOW,
+    CVE_2022_0492,
 };
 
 enum ATTACK_MODE {
