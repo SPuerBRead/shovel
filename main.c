@@ -38,6 +38,12 @@ int cap_sys_admin_check() {
 int main(int argc, char *argv[]) {
 
     srand(time(NULL));
+
+    if (argc == 1) {
+        usage(argv[0]);
+        exit(EXIT_SUCCESS);
+    }
+
     static const struct option opts[] = {
             {"help",           no_argument,       NULL, 'h'},
             {"version",        no_argument,       NULL, 'v'},
