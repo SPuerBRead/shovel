@@ -57,3 +57,11 @@ Mode (-m) type guide
     reverse:  reverse shell to remote listening address
     backdoor: put a backdoor to the host and execute
 ```
+## 编译
+
+编译时尽量用低版本glibc，高版本glibc编译到老系统上没办法运行
+
+```shell
+cmake .
+make
+```
