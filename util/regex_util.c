@@ -22,7 +22,6 @@ void regex_util(char *src, char *reg, char *result) {
             strcpy(cursorCopy, src);
             cursorCopy[match_char[1].rm_eo] = 0;
             strcpy(result, cursorCopy + match_char[1].rm_so);
-
         }
     } else if (match_result == REG_NOMATCH) {
     } else {

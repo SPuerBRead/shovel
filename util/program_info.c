@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #define PROGRAM_NAME "Shovel"
-#define VERSION "1.0"
+#define VERSION "1.1"
 
 
 void usage(char *args0) {
@@ -29,6 +29,7 @@ void usage(char *args0) {
            "    -I, --ip                             set ip address in reverse mode\n"
            "    -P, --port                           set port in reverse mode\n"
            "    -B, --backdoor_path                  set backdoor file path\n"
+           "    -y, --assumeyes                      automatically answer yes for all questions"
            "\n"
            "Mode (-m) type guide\n"
            "    exec:     run a single command and return the result\n"

@@ -55,9 +55,11 @@ int main(int argc, char *argv[]) {
             {"command",        required_argument, NULL, 'c'},
             {"ip",             required_argument, NULL, 'I'},
             {"port",           required_argument, NULL, 'P'},
-            {"backdoor_path",  required_argument, NULL, 'B'}
+            {"backdoor_path",  required_argument, NULL, 'B'},
+            {"assumeyes",      no_argument,       NULL, 'y'}
     };
     int opt;
+    int assumeyes = 0;
     attack_info.attack_mode = -1;
     attack_info.attack_type = -1;
     attack_info.command = (char *) malloc(512 * sizeof(char));
@@ -68,7 +70,7 @@ int main(int argc, char *argv[]) {
     memset(attack_info.ip, 0x00, 64);
     memset(attack_info.ip, 0x00, 512);
     memset(attack_info.port, 0x00, 10);
-    const char *opt_type = "hvrdup:m:c:I:P:B:";
+    const char *opt_type = "hvrduyp:m:c:I:P:B:";
     while ((opt = getopt_long_only(argc, argv, opt_type, opts, NULL)) != -1) {
         switch (opt) {
             case 'h':
@@ -113,22 +115,27 @@ int main(int argc, char *argv[]) {
                 attack_info.attack_type = CVE_2022_0492;
                 attack_info.attack_mode = SHELL;
                 break;
+            case 'y':
+                assumeyes = 1;
+                break;
             default:
                 usage(argv[0]);
                 break;
         }
     }
-    if (attack_info.attack_type == RELEASE_AGENT) {
-        if (attack_info.attack_mode == EXEC) {
-            output_bash_warning("release_agent", "exec");
-        } else if (attack_info.attack_mode == SHELL) {
-            output_bash_warning("release_agent", "shell");
-        } else if (attack_info.attack_mode == REVERSE) {
-            output_bash_warning("release_agent", "reverse");
-        }
-    } else if (attack_info.attack_type == DEVICE_ALLOW) {
-        if (attack_info.attack_mode == REVERSE) {
-            output_bash_warning("device_allow", "reverse");
+    if (assumeyes != 1) {
+        if (attack_info.attack_type == RELEASE_AGENT) {
+            if (attack_info.attack_mode == EXEC) {
+                output_bash_warning("release_agent", "exec");
+            } else if (attack_info.attack_mode == SHELL) {
+                output_bash_warning("release_agent", "shell");
+            } else if (attack_info.attack_mode == REVERSE) {
+                output_bash_warning("release_agent", "reverse");
+            }
+        } else if (attack_info.attack_type == DEVICE_ALLOW) {
+            if (attack_info.attack_mode == REVERSE) {
+                output_bash_warning("device_allow", "reverse");
+            }
         }
     }
     if (attack_info.attack_type == -1 || attack_info.attack_mode == -1) {

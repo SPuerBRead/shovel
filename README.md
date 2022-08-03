@@ -2,7 +2,15 @@
 
 Docker容器逃逸工具
 
-原理上就是逃逸的那一堆shell脚本，换成系统调用，绕过bash的监控
+1、通过mount命令逃逸触发告警？
+
+2、unshare命令发现没有-C参数？
+
+3、机器上没有各种语言的执行环境？
+
+4、逃逸程序太大不好下载？
+
+遇到以上问题那就用下这个程序吧，原理上就是逃逸的那一堆shell脚本，换成系统调用，绕过bash的监控
 
 ![](./img/shovel.gif)
 
@@ -52,7 +60,7 @@ Options of other
     -I, --ip                             set ip address in reverse mode
     -P, --port                           set port in reverse mode
     -B, --backdoor_path                  set backdoor file path
-
+    -y, --assumeyes                      automatically answer yes for all questions
 Mode (-m) type guide
     exec:     run a single command and return the result
     shell:    get host shell in current console
