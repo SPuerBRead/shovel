@@ -28,6 +28,7 @@ struct ATTACK_INFO {
     char *ip;
     char *port;
     char *backdoor_path;
+    char *container_path;
 } attack_info;
 
 
