@@ -38,6 +38,7 @@ struct RELEASE_AGENT_ATTACK_INFO {
     char *controller_path;
     char *mount_path;
     char *output_path_in_container;
+    int use_cve_2022_0492;
 } release_agent_attack_info;
 
 struct DEVICE_ALLOW_ATTACK_INFO {

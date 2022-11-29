@@ -15,6 +15,6 @@ int get_cgroup_id(char *cgroup_id) {
     memset(cgroup_data, 0x00, 1024 * 100);
     read_file(cgroup_path, cgroup_data, O_RDONLY);
     regex_util(cgroup_data,
-               "\\d+?:[a-zA-Z0-9]*?:(/docker/[a-zA-Z0-9]{64}|/kubepods\\.slice/kubepods-burstable\\.slice/kubepods-burstable-pod[a-zA-Z0-9-]+?\\.slice/docker-[a-zA-Z0-9]{64}\\.scope|/kubepods/burstable/pod[a-zA-Z0-9-]+?/[a-zA-Z0-9]{64}|/kubepods/pod[a-zA-Z0-9-]+?/[a-zA-Z0-9]{64})",
+               "\\d+?:[a-zA-Z0-9]*?:(/docker/[a-zA-Z0-9]{64}|/kubepods\\.slice/kubepods-burstable\\.slice/kubepods-burstable-pod[a-zA-Z0-9_-]+?\\.slice/docker-[a-zA-Z0-9]{64}\\.scope|/kubepods/burstable/pod[a-zA-Z0-9_-]+?/[a-zA-Z0-9]{64}|/kubepods/pod[a-zA-Z0-9_-]+?/[a-zA-Z0-9]{64})",
                cgroup_id);
 }

@@ -30,6 +30,8 @@ int cap_sys_admin_check() {
         if (result == 0) {
             printf_wrapper(INFO, "No CAP_SYS_ADMIN capability, use CVE_2022_0492 failed\n");
             return -1;
+        } else {
+            release_agent_attack_info.use_cve_2022_0492 = 1;
         }
     }
     return 0;
@@ -191,6 +193,7 @@ int main(int argc, char *argv[]) {
     }
     switch (attack_info.attack_type) {
         case RELEASE_AGENT: {
+            release_agent_attack_info.use_cve_2022_0492 = 0;
             if (cap_sys_admin_check() == -1) {
                 printf_wrapper(ERROR,
                                "Current process don't have CAP_SYS_ADMIN capability，can't escape by using release_agent\n");
