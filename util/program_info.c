@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #define PROGRAM_NAME "Shovel"
-#define VERSION "1.1"
+#define VERSION "1.3"
 
 
 void usage(char *args0) {
