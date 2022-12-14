@@ -27,9 +27,9 @@ int get_storage_driver_type() {
     char *proc_mounts_path = "/proc/mounts";
     char *mtab_path = "/etc/mtab";
     char *vfs_mount_path = "/proc/1/mountinfo";
-    int length;
+    int length,i;
     if (access(proc_mounts_path, F_OK) == 0 && ((length = load_mount_info(proc_mounts_path, mounts_info)) != 0)) {
-        for (int i = 0; i < length; i++) {
+        for (i = 0; i < length; i++) {
             if (strcmp(mounts_info[i]->mnt_type, "overlay") == 0) {
                 printf_wrapper(INFO, "Storage driver type: overlayfs\n");
                 return OVERLAYFS;
@@ -49,7 +49,7 @@ int get_storage_driver_type() {
         }
     }
     if (access(mtab_path, F_OK) == 0 && ((length = load_mount_info(proc_mounts_path, mounts_info)) != 0)) {
-        for (int i = 0; i < length; i++) {
+        for (i = 0; i < length; i++) {
             if (strcmp(mounts_info[i]->mnt_type, "overlay") == 0) {
                 printf_wrapper(INFO, "Storage driver type: overlayfs\n");
                 return OVERLAYFS;
@@ -69,7 +69,7 @@ int get_storage_driver_type() {
         }
     }
     if (access(vfs_mount_path, F_OK) == 0 && ((length = load_mount_info(vfs_mount_path, mounts_info)) != 0)) {
-        for (int i = 0; i < length; i++) {
+        for (i = 0; i < length; i++) {
             if (strstr(mounts_info[i]->mnt_opts, "/var/lib/docker/vfs")) {
                 printf_wrapper(INFO, "Storage driver type: vfs\n");
                 return VFS;
@@ -81,10 +81,11 @@ int get_storage_driver_type() {
 }
 
 void get_container_path_in_host(char *container_path_in_host) {
+    int i;
     switch (get_storage_driver_type()) {
         case OVERLAYFS: {
             char *regex_match_result = (char *) malloc(512 * sizeof(char));
-            for (int i = 0; i < 1024; i++) {
+            for (i = 0; i < 1024; i++) {
                 if (mounts_info[i] != NULL) {
                     if (strcmp(mounts_info[i]->mnt_type, "overlay") == 0) {
                         regex_util(mounts_info[i]->mnt_opts, ".*?perdir=(.*?),", regex_match_result);
@@ -103,7 +104,7 @@ void get_container_path_in_host(char *container_path_in_host) {
         }
         case DEVICE_MAPPER: {
             char *regex_match_result = (char *) malloc(512 * sizeof(char));
-            for (int i = 0; i < 1024; i++) {
+            for (i = 0; i < 1024; i++) {
                 if (mounts_info[i] != NULL) {
                     if (strstr(mounts_info[i]->mnt_fsname, "/dev/mapper/docker")) {
                         regex_util(mounts_info[i]->mnt_fsname, "dev/mapper/docker-[0-9]*:[0-9]*-[0-9]*-(.*)",
@@ -124,7 +125,7 @@ void get_container_path_in_host(char *container_path_in_host) {
             break;
         }
         case VFS: {
-            for (int i = 0; i < 1024; i++) {
+            for (i = 0; i < 1024; i++) {
                 if (mounts_info[i] != NULL) {
                     if (strstr(mounts_info[i]->mnt_opts, "/var/lib/docker/vfs")) {
                         strcpy(container_path_in_host, mounts_info[i]->mnt_opts);
@@ -139,7 +140,7 @@ void get_container_path_in_host(char *container_path_in_host) {
         }
         case ZFS: {
             char *regex_match_result = (char *) malloc(512 * sizeof(char));
-            for (int i = 0; i < 1024; i++) {
+            for (i = 0; i < 1024; i++) {
                 if (mounts_info[i] != NULL) {
                     if (strcmp(mounts_info[i]->mnt_type, "zfs") == 0) {
                         regex_util(mounts_info[i]->mnt_fsname, "/([a-z0-9]*$)", regex_match_result);
@@ -161,7 +162,7 @@ void get_container_path_in_host(char *container_path_in_host) {
             char *regex_match_result = (char *) malloc(512 * sizeof(char));
             char *si_id = (char *) malloc(512 * sizeof(char));
             char *aufs_read_path = (char *) malloc(512 * sizeof(char));
-            for (int i = 0; i < 1024; i++) {
+            for (i = 0; i < 1024; i++) {
                 if (mounts_info[i] != NULL) {
                     if (strcmp(mounts_info[i]->mnt_type, "aufs") == 0) {
                         regex_util(mounts_info[i]->mnt_opts, "si=([a-z0-9]*),", si_id);
@@ -190,7 +191,7 @@ void get_container_path_in_host(char *container_path_in_host) {
         }
         case BTRFS: {
             char *regex_match_result = (char *) malloc(512 * sizeof(char));
-            for (int i = 0; i < 1024; i++) {
+            for (i = 0; i < 1024; i++) {
                 if (mounts_info[i] != NULL) {
                     if (strcmp(mounts_info[i]->mnt_type, "btrfs") == 0) {
                         regex_util(mounts_info[i]->mnt_opts, "subvol=(/btrfs/subvolumes/[a-z0-9]{64})",

@@ -2,7 +2,7 @@
 // Created by FlagT on 2022/7/10.
 //
 
-#include <bits/types/FILE.h>
+// #include <bits/types/FILE.h>
 #include <mntent.h>
 #include <stdio.h>
 #include <stdlib.h>
