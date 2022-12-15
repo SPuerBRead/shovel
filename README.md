@@ -71,6 +71,16 @@ Mode (-m) type guide
 
 编译时尽量用低版本glibc，高版本glibc编译到老系统上没办法运行
 
+编译环境如果是Linux 4.6前，没有CLONE_NEWCGROUP常量,或者其他情况编译时出现以下报错
+
+```text
+/docker/opt/shovel/exploits/cve_2022_0492.c:30: error: 'CLONE_NEWCGROUP' undeclared (first use in this function)
+```
+
+可以用[no_0492](https://github.com/SPuerBRead/shovel/tree/no_0492) 这个branch的代码，这个版本的代码不包含cve-2022-0492的exp，换掉了一些c99的写法，使其尽可能在老机器上可以编译
+
+
+
 ```shell
 cmake .
 make
